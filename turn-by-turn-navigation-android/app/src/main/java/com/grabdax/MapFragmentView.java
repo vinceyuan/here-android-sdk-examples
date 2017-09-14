@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.here.android.example.guidance;
+package com.grabdax;
 
 import java.lang.ref.WeakReference;
 import java.util.List;

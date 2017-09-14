@@ -3,9 +3,8 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 23
     buildToolsVersion "25.0.2"
-
     defaultConfig {
-        applicationId 'com.here.android.example.guidance'
+        applicationId 'com.grabdax'
         minSdkVersion 15
 
         targetSdkVersion 23
@@ -17,6 +16,8 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    productFlavors {
     }
 }
 
