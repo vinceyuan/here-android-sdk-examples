@@ -17,6 +17,7 @@
 package com.grabdax;
 
 import java.lang.ref.WeakReference;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.here.android.mpa.common.GeoBoundingBox;
@@ -28,6 +29,7 @@ import com.here.android.mpa.mapping.Map;
 import com.here.android.mpa.mapping.MapFragment;
 import com.here.android.mpa.mapping.MapRoute;
 import com.here.android.mpa.routing.CoreRouter;
+import com.here.android.mpa.routing.Maneuver;
 import com.here.android.mpa.routing.Route;
 import com.here.android.mpa.routing.RouteOptions;
 import com.here.android.mpa.routing.RoutePlan;
@@ -37,9 +39,14 @@ import com.here.android.mpa.routing.Router;
 import com.here.android.mpa.routing.RoutingError;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import static com.here.android.mpa.guidance.NavigationManager.NaturalGuidanceMode.JUNCTION;
+import static com.here.android.mpa.guidance.NavigationManager.NaturalGuidanceMode.STOP_SIGN;
+import static com.here.android.mpa.guidance.NavigationManager.NaturalGuidanceMode.TRAFFIC_LIGHT;
 
 /**
  * This class encapsulates the properties and functionality of the Map view.It also triggers a
@@ -75,7 +82,7 @@ public class MapFragmentView {
 
                     if (error == Error.NONE) {
                         m_map = m_mapFragment.getMap();
-                        m_map.setCenter(new GeoCoordinate(49.259149, -123.008555),
+                        m_map.setCenter(new GeoCoordinate(1.281269, 103.848359),
                                 Map.Animation.LINEAR);
                         m_map.setZoomLevel(13.2);
                         /*
@@ -120,9 +127,9 @@ public class MapFragmentView {
 
         /* Define waypoints for the route */
         /* START: 4350 Still Creek Dr */
-        RouteWaypoint startPoint = new RouteWaypoint(new GeoCoordinate(49.259149, -123.008555));
+        RouteWaypoint startPoint = new RouteWaypoint(new GeoCoordinate(1.281269, 103.848359));
         /* END: Langley BC */
-        RouteWaypoint destination = new RouteWaypoint(new GeoCoordinate(49.073640, -122.559549));
+        RouteWaypoint destination = new RouteWaypoint(new GeoCoordinate(1.298776, 103.853564)); //1.280915, 103.845793 // geylang 1.298776, 103.853564
 
         /* Add both waypoints to the route plan */
         routePlan.addWaypoint(startPoint);
@@ -223,7 +230,18 @@ public class MapFragmentView {
          * suitable for walking. Simulation and tracking modes can also be launched at this moment
          * by calling either simulate() or startTracking()
          */
-        m_navigationManager.startNavigation(route);
+        //m_navigationManager.startNavigation(route);
+
+        // Get maneuvers
+        List<Maneuver> maneuvers = route.getManeuvers();
+        String turns = "";
+        for (Maneuver m:maneuvers) {
+            Maneuver.Turn t = m.getTurn();
+            turns += t.name() + ", ";
+        }
+        Log.d("vince", turns);
+
+        m_navigationManager.simulate(route, 10);
         /*
          * Set the map update mode to ROADVIEW.This will enable the automatic map movement based on
          * the current location.If user gestures are expected during the navigation, it's
@@ -232,12 +250,15 @@ public class MapFragmentView {
          */
         m_navigationManager.setMapUpdateMode(NavigationManager.MapUpdateMode.ROADVIEW);
 
+        m_navigationManager.setNaturalGuidanceMode(EnumSet.of(TRAFFIC_LIGHT, STOP_SIGN, JUNCTION));
+
         /*
          * NavigationManager contains a number of listeners which we can use to monitor the
          * navigation status and getting relevant instructions.In this example, we will add 2
          * listeners for demo purpose,please refer to HERE Android SDK API documentation for details
          */
         addNavigationListeners();
+
     }
 
     private void addNavigationListeners() {
@@ -253,12 +274,25 @@ public class MapFragmentView {
         /* Register a PositionListener to monitor the position updates */
         m_navigationManager.addPositionListener(
                 new WeakReference<NavigationManager.PositionListener>(m_positionListener));
+
+        m_navigationManager.addNewInstructionEventListener(new WeakReference<NavigationManager.NewInstructionEventListener>(m_instructionListener));
     }
 
     private NavigationManager.PositionListener m_positionListener = new NavigationManager.PositionListener() {
         @Override
         public void onPositionUpdated(GeoPosition geoPosition) {
             /* Current position information can be retrieved in this callback */
+        }
+    };
+
+    private final NavigationManager.NewInstructionEventListener m_instructionListener = new NavigationManager.NewInstructionEventListener() {
+        @Override
+        public void onNewInstructionEvent() {
+            final Maneuver maneuver = m_navigationManager.getNextManeuver();
+            if (maneuver != null) {
+                Log.d("", String.format("action=%s, roadname=%s, distanceToNext=%s, turn=%s, nextRoad=%s", maneuver.getAction(), maneuver.getRoadName(), maneuver.getDistanceToNextManeuver(),
+                        maneuver.getTurn(), maneuver.getNextRoadName()));
+            }
         }
     };
 
