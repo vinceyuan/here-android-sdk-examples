@@ -17,6 +17,7 @@
 package com.grabdax;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -24,6 +25,8 @@ import com.here.android.mpa.common.GeoBoundingBox;
 import com.here.android.mpa.common.GeoCoordinate;
 import com.here.android.mpa.common.GeoPosition;
 import com.here.android.mpa.common.OnEngineInitListener;
+import com.here.android.mpa.common.RoadElement;
+import com.here.android.mpa.guidance.LaneInformation;
 import com.here.android.mpa.guidance.NavigationManager;
 import com.here.android.mpa.mapping.Map;
 import com.here.android.mpa.mapping.MapFragment;
@@ -65,9 +68,12 @@ public class MapFragmentView {
     private LinearLayout m_maneuverView;
     private ImageView m_maneuverIconImageView;
     private TextView m_actionTextView;
+    private List<ImageView> m_laneIconImageViews = new ArrayList<ImageView>();
     private NavigationManager m_navigationManager;
     private GeoBoundingBox m_geoBoundingBox;
     private Route m_route;
+
+    private List<LaneInformation> m_listLaneInfo = new ArrayList<LaneInformation>();
 
     public MapFragmentView(Activity activity) {
         m_activity = activity;
@@ -226,6 +232,13 @@ public class MapFragmentView {
         m_maneuverView = (LinearLayout)m_activity.findViewById(R.id.maneuverView);
         m_maneuverIconImageView = (ImageView)m_activity.findViewById(R.id.maneuverIconImageView);
         m_actionTextView = (TextView)m_activity.findViewById(R.id.actionTextView);
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView0));
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView1));
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView2));
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView3));
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView4));
+        m_laneIconImageViews.add((ImageView)m_activity.findViewById(R.id.laneIconImageView5));
+        updateLaneInfo(m_listLaneInfo);
         updateManeuver("", 0); // Hide maneuver view
     }
 
@@ -287,6 +300,8 @@ public class MapFragmentView {
                 new WeakReference<NavigationManager.PositionListener>(m_positionListener));
 
         m_navigationManager.addNewInstructionEventListener(new WeakReference<NavigationManager.NewInstructionEventListener>(m_instructionListener));
+
+        m_navigationManager.addLaneInformationListener(new WeakReference<NavigationManager.LaneInformationListener>(m_laneInformationListener));
     }
 
     private NavigationManager.PositionListener m_positionListener = new NavigationManager.PositionListener() {
@@ -300,11 +315,11 @@ public class MapFragmentView {
         @Override
         public void onNewInstructionEvent() {
             final Maneuver maneuver = m_navigationManager.getNextManeuver();
+            String actionString = "";
+            int maneuverIconID = 0;
             if (maneuver != null) {
                 Log.d("", String.format("action=%s, roadname=%s, distanceToNext=%s, turn=%s, nextRoad=%s", maneuver.getAction(), maneuver.getRoadName(), maneuver.getDistanceToNextManeuver(),
                         maneuver.getTurn(), maneuver.getNextRoadName()));
-                String actionString = "";
-                int maneuverIconID = 0;
                 switch (maneuver.getIcon()) {
                     case GO_STRAIGHT:
                         actionString = "Continue straight";
@@ -344,9 +359,8 @@ public class MapFragmentView {
                         maneuverIconID = R.drawable.status_maneuver_icon_2;
                         break;
                 }
-
-                updateManeuver(actionString, maneuverIconID);
             }
+            updateManeuver(actionString, maneuverIconID);
         }
     };
 
@@ -359,6 +373,31 @@ public class MapFragmentView {
                 m_maneuverIconImageView.setImageResource(maneuverIconID);
             }
             m_maneuverView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private final NavigationManager.LaneInformationListener m_laneInformationListener = new NavigationManager.LaneInformationListener() {
+        @Override
+        public void onLaneInformation(List<LaneInformation> list, RoadElement roadElement) {
+            m_listLaneInfo = list;
+            updateLaneInfo(m_listLaneInfo);
+        }
+    };
+
+    private void updateLaneInfo(List<LaneInformation> listLaneInfo) {
+        for (int i = 0; i < 6; i++) {
+            if (i < listLaneInfo.size()) {
+                LaneInformation laneInfo = listLaneInfo.get(i);
+                int bitmask = 0;
+                for (LaneInformation.Direction dir : laneInfo.getDirections()) {
+                    bitmask |= dir.value();
+                }
+                int laneIconID = m_activity.getResources().getIdentifier("laneinfo_"+bitmask, "drawable", m_activity.getApplicationContext().getPackageName());
+                m_laneIconImageViews.get(i).setImageResource(laneIconID);
+                m_laneIconImageViews.get(i).setVisibility(View.VISIBLE);
+            } else {
+                m_laneIconImageViews.get(i).setVisibility(View.GONE);
+            }
         }
     }
 
