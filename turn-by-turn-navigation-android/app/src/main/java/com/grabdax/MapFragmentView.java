@@ -42,6 +42,7 @@ import android.app.Activity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,6 +63,7 @@ public class MapFragmentView {
     private Button m_naviControlButton;
     private Map m_map;
     private LinearLayout m_maneuverView;
+    private ImageView m_maneuverIconImageView;
     private TextView m_actionTextView;
     private NavigationManager m_navigationManager;
     private GeoBoundingBox m_geoBoundingBox;
@@ -133,7 +135,7 @@ public class MapFragmentView {
         /* START: 4350 Still Creek Dr */
         RouteWaypoint startPoint = new RouteWaypoint(new GeoCoordinate(1.281269, 103.848359));
         /* END: Langley BC */
-        RouteWaypoint destination = new RouteWaypoint(new GeoCoordinate(1.280915, 103.845793)); // geylang 1.298776, 103.853564
+        RouteWaypoint destination = new RouteWaypoint(new GeoCoordinate(1.311472, 103.856681)); //1.280915, 103.845793)); // geylang 1.298776, 103.853564
 
         /* Add both waypoints to the route plan */
         routePlan.addWaypoint(startPoint);
@@ -222,7 +224,9 @@ public class MapFragmentView {
         });
 
         m_maneuverView = (LinearLayout)m_activity.findViewById(R.id.maneuverView);
+        m_maneuverIconImageView = (ImageView)m_activity.findViewById(R.id.maneuverIconImageView);
         m_actionTextView = (TextView)m_activity.findViewById(R.id.actionTextView);
+        updateManeuver("", 0); // Hide maneuver view
     }
 
     private void startNavigation(Route route) {
@@ -300,56 +304,60 @@ public class MapFragmentView {
                 Log.d("", String.format("action=%s, roadname=%s, distanceToNext=%s, turn=%s, nextRoad=%s", maneuver.getAction(), maneuver.getRoadName(), maneuver.getDistanceToNextManeuver(),
                         maneuver.getTurn(), maneuver.getNextRoadName()));
                 String actionString = "";
+                int maneuverIconID = 0;
                 switch (maneuver.getIcon()) {
                     case GO_STRAIGHT:
                         actionString = "Continue straight";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_1);
+                        maneuverIconID = R.drawable.status_maneuver_icon_1;
                         break;
                     case KEEP_MIDDLE:
                         actionString = "Continue straight";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_8);
+                        maneuverIconID = R.drawable.status_maneuver_icon_8;
                         break;
                     case KEEP_RIGHT:
                         actionString = "Keep Right";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_4);
+                        maneuverIconID = R.drawable.status_maneuver_icon_4;
                         break;
                     case KEEP_LEFT:
                         actionString = "Keep Left";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_9);
+                        maneuverIconID = R.drawable.status_maneuver_icon_9;
                         break;
 
                     case LIGHT_RIGHT:
                     case QUITE_RIGHT:
                     case HEAVY_RIGHT:
                         actionString = "Turn Right on " + maneuver.getNextRoadName();
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_6);
+                        maneuverIconID = R.drawable.status_maneuver_icon_6;
                         break;
                     case LIGHT_LEFT:
                     case QUITE_LEFT:
                     case HEAVY_LEFT:
                         actionString = "Turn Left on " + maneuver.getNextRoadName();
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_11);
+                        maneuverIconID = R.drawable.status_maneuver_icon_11;
                         break;
                     case UTURN_LEFT:
                         actionString = "Make a U-turn left";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_3);
+                        maneuverIconID = R.drawable.status_maneuver_icon_3;
                         break;
                     case UTURN_RIGHT:
                         actionString = "Make a U-turn right";
-                        //iconManeuver.set(R.drawable.status_maneuver_icon_2);
+                        maneuverIconID = R.drawable.status_maneuver_icon_2;
                         break;
                 }
 
-                updateManeuver(actionString);
+                updateManeuver(actionString, maneuverIconID);
             }
         }
     };
 
-    private void updateManeuver(String actionString) {
+    private void updateManeuver(String actionString, int maneuverIconID) {
         if (actionString.isEmpty()) {
             m_maneuverView.setVisibility(View.GONE);
         } else {
             m_actionTextView.setText(actionString);
+            if (maneuverIconID != 0) {
+                m_maneuverIconImageView.setImageResource(maneuverIconID);
+            }
             m_maneuverView.setVisibility(View.VISIBLE);
         }
     }

@@ -14,4 +14,6 @@
 
     <color name="v5_silver">#CACACA</color>
     <color name="cloudy_blue">#ccd6dd</color>
+
+    <color name="primary">#252831</color>
 </resources>
