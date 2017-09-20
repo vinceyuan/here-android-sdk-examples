@@ -3,4 +3,15 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="v5_mine_shaft">#363A45</color>
+    <color name="v5_green">#00B140</color>
+    <color name="v5_blue_text_secondary">#5E9BF2</color>
+    <color name="v6_green_drop_off">#1AB53D</color>
+
+    <color name="pick_up">@color/v5_blue_text_secondary</color>
+    <color name="drop_off">@color/v6_green_drop_off</color>
+
+    <color name="v5_silver">#CACACA</color>
+    <color name="cloudy_blue">#ccd6dd</color>
 </resources>
